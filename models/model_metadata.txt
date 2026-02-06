@@ -1,0 +1,3 @@
+model_name: gradient_boosting
+metrics: {'accuracy': 0.7047236479283153, 'precision': 0.5333257635971387, 'recall': 0.0709205936976249, 'f1_score': 0.12519324057785597, 'roc_auc': 0.6497776149469823}
+trained_date: 2026-02-05 23:14:38
