@@ -68,7 +68,6 @@ def generate_admissions(patients_df: pd.DataFrame, avg_admissions_per_patient: f
     encounter_id = 1
     
     for idx, patient in patients_df.iterrows():
-        # Number of admissions for this patient (Poisson distribution)
         n_admissions = np.random.poisson(avg_admissions_per_patient)
         n_admissions = max(1, min(n_admissions, 8))  # At least 1, max 8
         
@@ -77,37 +76,30 @@ def generate_admissions(patients_df: pd.DataFrame, avg_admissions_per_patient: f
             days_ago = np.random.randint(1, 730)
             admission_date = datetime.now() - timedelta(days=days_ago)
             
-            # Length of stay
             los = max(1, int(np.random.gamma(2.5, 1.5)))  # Gamma distribution for LOS
             
-            # Previous admission counts
             prev_emergency = np.random.poisson(0.3) if admission_num > 0 else 0
             prev_inpatient = admission_num
             prev_outpatient = np.random.poisson(1.2)
             
-            # Clinical metrics
             num_lab_procedures = int(np.random.gamma(5, 5)) + 10
             num_procedures = np.random.poisson(1.8)
             num_medications = int(np.random.gamma(2, 5)) + 5
             num_diagnoses = min(16, max(1, int(np.random.gamma(1.8, 2))))
             
-            # Admission type
             if admission_num == 0:
                 admission_type = np.random.choice(
                     ['Emergency', 'Urgent', 'Elective', 'Trauma'],
                     p=[0.52, 0.28, 0.17, 0.03]
                 )
             else:
-                # If readmission, more likely to be emergency
                 admission_type = np.random.choice(
                     ['Emergency', 'Urgent', 'Elective', 'Trauma'],
                     p=[0.68, 0.25, 0.05, 0.02]
                 )
-            
-            # Calculate readmission probability based on risk factors
+                
             readmit_prob = 0.11  # Base rate ~11%
             
-            # Risk factors (realistic clinical predictors)
             if patient['age'] > 65:
                 readmit_prob += 0.08
             if patient['age'] > 75:
@@ -129,7 +121,6 @@ def generate_admissions(patients_df: pd.DataFrame, avg_admissions_per_patient: f
             
             readmit_prob = min(0.65, readmit_prob)  # Cap at 65%
             
-            # Determine if readmitted (only if not the last admission)
             if admission_num < n_admissions - 1:
                 readmitted = 1 if np.random.random() < readmit_prob else 0
             else:
@@ -174,18 +165,14 @@ def create_database_and_csv(n_patients: int = 50000):
     logger.info("HOSPITAL READMISSION DATA GENERATION")
     logger.info("=" * 60)
     
-    # Create directories if they don't exist
     os.makedirs('data/raw', exist_ok=True)
     os.makedirs('data/processed', exist_ok=True)
     
-    # Generate data
     patients_df = generate_patient_records(n_patients)
     admissions_df = generate_admissions(patients_df)
     
-    # Merge for complete dataset
     complete_df = admissions_df.merge(patients_df, on='patient_id', how='left')
     
-    # Reorder columns for better readability
     column_order = [
         'encounter_id', 'patient_id', 'age', 'gender', 'race', 'weight',
         'admission_date', 'admission_type', 'time_in_hospital',
@@ -195,25 +182,20 @@ def create_database_and_csv(n_patients: int = 50000):
     ]
     complete_df = complete_df[column_order]
     
-    # Save to CSV
     csv_path = 'data/raw/patient_data.csv'
     complete_df.to_csv(csv_path, index=False)
     logger.info(f"✓ Saved complete dataset to {csv_path}")
-    
-    # Also save to SQLite database for SQL demonstration
+
     db_path = 'data/hospital_data.db'
     conn = sqlite3.connect(db_path)
     
-    # Save patients table
     patients_df.to_sql('patients', conn, if_exists='replace', index=False)
     
-    # Save admissions table
     admissions_df.to_sql('admissions', conn, if_exists='replace', index=False)
     
     conn.close()
     logger.info(f"✓ Saved database to {db_path}")
     
-    # Print summary statistics
     logger.info("=" * 60)
     logger.info("DATASET SUMMARY")
     logger.info("=" * 60)
@@ -226,14 +208,12 @@ def create_database_and_csv(n_patients: int = 50000):
     logger.info(f"Average medications: {complete_df['num_medications'].mean():.1f}")
     logger.info("=" * 60)
     
-    # Display age distribution
     logger.info("\nAge Distribution:")
     age_bins = [0, 30, 50, 65, 75, 100]
     age_labels = ['18-29', '30-49', '50-64', '65-74', '75+']
     complete_df['age_group'] = pd.cut(complete_df['age'], bins=age_bins, labels=age_labels)
     print(complete_df['age_group'].value_counts().sort_index())
-    
-    # Display readmission by age group
+
     logger.info("\nReadmission Rate by Age Group:")
     readmit_by_age = complete_df.groupby('age_group')['readmitted'].agg(['mean', 'count'])
     readmit_by_age['mean'] = readmit_by_age['mean'].apply(lambda x: f"{x:.2%}")
@@ -245,7 +225,7 @@ def create_database_and_csv(n_patients: int = 50000):
 if __name__ == "__main__":
     # Generate dataset with 50,000 patients (will create ~100,000+ records)
     # Adjust n_patients to create larger datasets (e.g., 500,000 for 1M+ records)
-    df = create_database_and_csv(n_patients=500000)  # This will create ~1M records
+    df = create_database_and_csv(n_patients=500000)  
     
     logger.info("\n✓ Data generation complete!")
     logger.info("Next steps:")
