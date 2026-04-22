@@ -41,7 +41,6 @@ class FeatureEngineer:
         # Age squared (non-linear relationship)
         df['age_squared'] = df['age'] ** 2
         
-        # Age groups based on clinical significance
         df['age_group_young'] = (df['age'] < 50).astype(int)
         df['age_group_middle'] = ((df['age'] >= 50) & (df['age'] < 65)).astype(int)
         df['age_group_senior'] = ((df['age'] >= 65) & (df['age'] < 75)).astype(int)
@@ -57,14 +56,12 @@ class FeatureEngineer:
         """
         logger.info("Creating length of stay features...")
         
-        # Extended stay flags
         df['short_stay'] = (df['time_in_hospital'] <= 3).astype(int)
         df['medium_stay'] = ((df['time_in_hospital'] > 3) & 
                             (df['time_in_hospital'] <= 7)).astype(int)
         df['long_stay'] = (df['time_in_hospital'] > 7).astype(int)
         df['very_long_stay'] = (df['time_in_hospital'] > 14).astype(int)
         
-        # LOS squared
         df['los_squared'] = df['time_in_hospital'] ** 2
         
         logger.info("  Created 5 LOS features")
@@ -77,20 +74,15 @@ class FeatureEngineer:
         """
         logger.info("Creating healthcare utilization features...")
         
-        # Total prior utilization
         df['total_prior_admissions'] = (df['number_emergency'] + 
                                         df['number_inpatient'])
         
-        # Frequent flyer flag (multiple ED visits)
         df['frequent_ed_user'] = (df['number_emergency'] >= 2).astype(int)
         
-        # Any prior admission
         df['has_prior_admission'] = (df['total_prior_admissions'] > 0).astype(int)
         
-        # High utilization flag
         df['high_utilization'] = (df['total_prior_visits'] >= 5).astype(int)
         
-        # Emergency ratio
         df['emergency_ratio'] = df['number_emergency'] / (df['total_prior_visits'] + 1)
         
         logger.info("  Created 5 utilization features")
@@ -103,19 +95,15 @@ class FeatureEngineer:
         """
         logger.info("Creating clinical complexity features...")
         
-        # Diagnosis burden
         df['high_diagnosis_count'] = (df['number_diagnoses'] >= 7).astype(int)
         df['diagnosis_squared'] = df['number_diagnoses'] ** 2
         
-        # Medication burden
         df['high_medication_count'] = (df['num_medications'] >= 15).astype(int)
         df['polypharmacy'] = (df['num_medications'] >= 20).astype(int)
         
-        # Procedure intensity
         df['has_procedures'] = (df['num_procedures'] > 0).astype(int)
         df['high_procedure_count'] = (df['num_procedures'] >= 3).astype(int)
         
-        # Lab intensity
         df['high_lab_count'] = (df['num_lab_procedures'] >= 50).astype(int)
         
         logger.info("  Created 7 complexity features")
@@ -128,22 +116,17 @@ class FeatureEngineer:
         """
         logger.info("Creating interaction features...")
         
-        # Age × Prior admissions (elderly with prior admissions = very high risk)
         if 'total_prior_admissions' in df.columns:
             df['age_prior_interaction'] = df['age'] * df['total_prior_admissions']
         
-        # Age × Medications (elderly on many meds = high risk)
         df['age_medication_interaction'] = df['age'] * df['num_medications']
         
-        # LOS × Diagnoses (long stay + many diagnoses = complex case)
         df['los_diagnosis_interaction'] = (df['time_in_hospital'] * 
                                            df['number_diagnoses'])
         
-        # LOS × Procedures
         df['los_procedure_interaction'] = (df['time_in_hospital'] * 
                                            df['num_procedures'])
         
-        # Medications × Diagnoses (medication complexity)
         df['med_diagnosis_interaction'] = (df['num_medications'] * 
                                            df['number_diagnoses'])
         
@@ -156,34 +139,27 @@ class FeatureEngineer:
         """
         logger.info("Creating composite risk scores...")
         
-        # Readmission risk score (weighted sum of key predictors)
         risk_score = 0
         
-        # Age component (20% weight)
         if 'age' in df.columns:
             age_normalized = df['age'] / 100
             risk_score += 0.20 * age_normalized
         
-        # Prior admission component (30% weight)
         if 'total_prior_admissions' in df.columns:
             prior_normalized = df['total_prior_admissions'] / df['total_prior_admissions'].max()
             risk_score += 0.30 * prior_normalized
         
-        # LOS component (20% weight)
         los_normalized = df['time_in_hospital'] / df['time_in_hospital'].max()
         risk_score += 0.20 * los_normalized
         
-        # Diagnosis burden component (15% weight)
         diag_normalized = df['number_diagnoses'] / df['number_diagnoses'].max()
         risk_score += 0.15 * diag_normalized
         
-        # Medication burden component (15% weight)
         med_normalized = df['num_medications'] / df['num_medications'].max()
         risk_score += 0.15 * med_normalized
         
         df['composite_risk_score'] = risk_score
         
-        # High risk flag
         df['very_high_risk'] = (risk_score > 0.6).astype(int)
         
         logger.info("  Created composite risk score")
@@ -198,27 +174,22 @@ class FeatureEngineer:
         X = df.drop(columns=[target_col])
         y = df[target_col]
         
-        # Calculate mutual information
         mi_scores = mutual_info_classif(X, y, random_state=42)
         
-        # Create feature importance dataframe
         feature_importance_df = pd.DataFrame({
             'feature': X.columns,
             'importance': mi_scores
         }).sort_values('importance', ascending=False)
         
-        # Store feature importance
         self.feature_importance = dict(zip(feature_importance_df['feature'], 
                                            feature_importance_df['importance']))
         
-        # Select top features
         top_features = feature_importance_df.head(n_features)['feature'].tolist()
         
         logger.info("\nTop 10 Most Important Features:")
         for i, row in feature_importance_df.head(10).iterrows():
             logger.info(f"  {i+1}. {row['feature']}: {row['importance']:.4f}")
         
-        # Keep target column
         selected_columns = top_features + [target_col]
         df_selected = df[selected_columns]
         
@@ -234,11 +205,9 @@ class FeatureEngineer:
         logger.info("STARTING FEATURE ENGINEERING PIPELINE")
         logger.info("=" * 60)
         
-        # Load data
         df = self.load_data(input_path)
         initial_features = len(df.columns) - 1  # Exclude target
         
-        # Create features
         df = self.create_age_features(df)
         df = self.create_los_features(df)
         df = self.create_utilization_features(df)
@@ -254,7 +223,6 @@ class FeatureEngineer:
         logger.info(f"  New features created: {new_features}")
         logger.info(f"  Total features: {total_features}")
         
-        # Feature selection
         if select_features and 'readmitted' in df.columns:
             df, importance_df = self.select_top_features(df)
             
@@ -264,7 +232,6 @@ class FeatureEngineer:
                 importance_df.to_csv(importance_path, index=False)
                 logger.info(f"✓ Saved feature importance to {importance_path}")
         
-        # Save engineered features
         if output_path:
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             df.to_csv(output_path, index=False)
