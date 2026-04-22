@@ -75,21 +75,21 @@ class ReadmissionModelTrainer:
         logger.info("Training Random Forest model...")
         
         model = RandomForestClassifier(
-            n_estimators=300,          # More trees for stability
-            max_depth=20,              # Prevent overfitting
-            min_samples_split=10,      # Require more samples to split
-            min_samples_leaf=4,        # Require more samples in leaf
-            max_features='sqrt',       # Use subset of features
-            class_weight='balanced',   # Handle class imbalance
+            n_estimators=300,        
+            max_depth=20,             
+            min_samples_split=10,     
+            min_samples_leaf=4,       
+            max_features='sqrt',      
+            class_weight='balanced', 
             random_state=self.random_state,
-            n_jobs=-1,                # Use all CPU cores
+            n_jobs=-1,               
             verbose=0
         )
         
         model.fit(X_train, y_train)
         
         self.models['random_forest'] = model
-        logger.info("✓ Random Forest training complete")
+        logger.info("Random Forest training complete")
         
         return model
     
@@ -106,7 +106,7 @@ class ReadmissionModelTrainer:
             max_depth=5,
             min_samples_split=10,
             min_samples_leaf=4,
-            subsample=0.8,            # Use 80% of samples per tree
+            subsample=0.8,          
             max_features='sqrt',
             random_state=self.random_state,
             verbose=0
@@ -115,7 +115,7 @@ class ReadmissionModelTrainer:
         model.fit(X_train, y_train)
         
         self.models['gradient_boosting'] = model
-        logger.info("✓ Gradient Boosting training complete")
+        logger.info("Gradient Boosting training complete")
         
         return model
     
@@ -135,7 +135,7 @@ class ReadmissionModelTrainer:
         model.fit(X_train, y_train)
         
         self.models['logistic_regression'] = model
-        logger.info("✓ Logistic Regression training complete")
+        logger.info("Logistic Regression training complete")
         
         return model
     
@@ -146,11 +146,9 @@ class ReadmissionModelTrainer:
         """
         logger.info(f"\nEvaluating {model_name}...")
         
-        # Predictions
         y_pred = model.predict(X_test)
         y_pred_proba = model.predict_proba(X_test)[:, 1]
         
-        # Calculate metrics
         metrics = {
             'accuracy': accuracy_score(y_test, y_pred),
             'precision': precision_score(y_test, y_pred),
@@ -159,10 +157,8 @@ class ReadmissionModelTrainer:
             'roc_auc': roc_auc_score(y_test, y_pred_proba)
         }
         
-        # Confusion matrix
         cm = confusion_matrix(y_test, y_pred)
         
-        # Log results
         logger.info(f"\n{model_name} Performance:")
         logger.info(f"  Accuracy:  {metrics['accuracy']:.4f} ({metrics['accuracy']*100:.2f}%)")
         logger.info(f"  Precision: {metrics['precision']:.4f} ({metrics['precision']*100:.2f}%)")
@@ -198,24 +194,20 @@ class ReadmissionModelTrainer:
         logger.info("TRAINING ALL MODELS")
         logger.info("=" * 60)
         
-        # Train models
         rf_model = self.train_random_forest(X_train, y_train)
         gb_model = self.train_gradient_boosting(X_train, y_train)
         lr_model = self.train_logistic_regression(X_train, y_train)
         
-        # Evaluate models
         rf_metrics, rf_cm, _, _ = self.evaluate_model(rf_model, X_test, y_test, "Random Forest")
         gb_metrics, gb_cm, _, _ = self.evaluate_model(gb_model, X_test, y_test, "Gradient Boosting")
         lr_metrics, lr_cm, _, _ = self.evaluate_model(lr_model, X_test, y_test, "Logistic Regression")
         
-        # Store results
         self.results = {
             'random_forest': rf_metrics,
             'gradient_boosting': gb_metrics,
             'logistic_regression': lr_metrics
         }
-        
-        # Cross-validation
+      
         if cross_validate:
             logger.info("\n" + "=" * 60)
             logger.info("CROSS-VALIDATION RESULTS")
@@ -227,7 +219,6 @@ class ReadmissionModelTrainer:
             self.cross_validate_model(gb_model, X_full, y_full, "Gradient Boosting")
             self.cross_validate_model(lr_model, X_full, y_full, "Logistic Regression")
         
-        # Determine best model
         best_auc = 0
         for name, metrics in self.results.items():
             if metrics['roc_auc'] > best_auc:
@@ -271,7 +262,7 @@ class ReadmissionModelTrainer:
         if model_name in self.models:
             filepath = os.path.join(output_dir, f'{model_name}_model.pkl')
             joblib.dump(self.models[model_name], filepath)
-            logger.info(f"✓ Saved {model_name} to {filepath}")
+            logger.info(f"Saved {model_name} to {filepath}")
         else:
             logger.error(f"Model {model_name} not found!")
     
@@ -294,8 +285,8 @@ class ReadmissionModelTrainer:
                 for key, value in metadata.items():
                     f.write(f"{key}: {value}\n")
             
-            logger.info(f"✓ Saved best model ({self.best_model_name}) to {filepath}")
-            logger.info(f"✓ Saved metadata to {metadata_path}")
+            logger.info(f"Saved best model ({self.best_model_name}) to {filepath}")
+            logger.info(f"Saved metadata to {metadata_path}")
         else:
             logger.error("No best model found! Train models first.")
     
@@ -320,20 +311,16 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    # Initialize trainer
     trainer = ReadmissionModelTrainer()
     
-    # Load and prepare data
     df = trainer.load_data(args.input)
     X_train, X_test, y_train, y_test = trainer.prepare_data(df, test_size=args.test_size)
     
-    # Train and evaluate
     results = trainer.train_and_evaluate_all(
         X_train, X_test, y_train, y_test,
         cross_validate=not args.no_cv
     )
     
-    # Get feature importance for best model
     if trainer.best_model:
         importance_df = trainer.get_feature_importance(
             trainer.best_model, 
@@ -342,10 +329,9 @@ if __name__ == "__main__":
         if importance_df is not None:
             importance_path = os.path.join(args.output_dir, 'feature_importance.csv')
             importance_df.to_csv(importance_path, index=False)
-            logger.info(f"✓ Saved feature importance to {importance_path}")
+            logger.info(f"Saved feature importance to {importance_path}")
     
-    # Save models
     trainer.save_all_models(args.output_dir)
     trainer.save_best_model(args.output_dir)
     
-    logger.info("\n✓ Model training pipeline complete!")
+   logger.info("Model training pipeline complete!")
