@@ -25,4 +25,3 @@ def test_data_types():
     assert ages.dtype == np.int64 or ages.dtype == np.int32
 
 
-# Add more tests after model training
