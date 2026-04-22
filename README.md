@@ -231,10 +231,8 @@ Target: **0.75-0.80 ROC-AUC** through rigorous statistical optimization
 ```python
 from src.prediction import ReadmissionPredictor
 
-# Load trained model
 predictor = ReadmissionPredictor('models/best_model.pkl')
 
-# Patient data
 patient = {
     'age': 72,
     'time_in_hospital': 8,
@@ -244,7 +242,6 @@ patient = {
     'number_diagnoses': 7
 }
 
-# Predict
 result = predictor.predict_single_patient(patient)
 print(f"Risk Level: {result['risk_level']}")
 print(f"Probability: {result['risk_percentage']}")
