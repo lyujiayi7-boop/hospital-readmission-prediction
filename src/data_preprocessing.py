@@ -42,7 +42,6 @@ class DataPreprocessor:
         
         initial_missing = df.isnull().sum().sum()
         
-        # Numerical columns - fill with median
         numerical_cols = df.select_dtypes(include=[np.number]).columns
         for col in numerical_cols:
             if df[col].isnull().any():
@@ -50,7 +49,6 @@ class DataPreprocessor:
                 df[col].fillna(median_val, inplace=True)
                 logger.info(f"  Filled {col} with median: {median_val:.2f}")
         
-        # Categorical columns - fill with mode
         categorical_cols = df.select_dtypes(include=['object']).columns
         for col in categorical_cols:
             if df[col].isnull().any():
@@ -108,7 +106,6 @@ class DataPreprocessor:
         """
         logger.info("Encoding categorical variables...")
         
-        # Binary categorical - use label encoding
         binary_cols = ['gender']
         for col in binary_cols:
             if col in df.columns:
@@ -117,7 +114,6 @@ class DataPreprocessor:
                 self.label_encoders[col] = le
                 logger.info(f"  Label encoded {col}")
         
-        # Multi-class categorical - use one-hot encoding
         multi_class_cols = ['race', 'admission_type']
         for col in multi_class_cols:
             if col in df.columns:
@@ -139,16 +135,12 @@ class DataPreprocessor:
                                     df['number_inpatient'] + 
                                     df['number_outpatient'])
         
-        # High risk flag (multiple prior admissions)
         df['high_risk_flag'] = (df['total_prior_visits'] >= 3).astype(int)
         
-        # Medication intensity
         df['medication_intensity'] = df['num_medications'] / (df['time_in_hospital'] + 1)
         
-        # Procedure complexity
         df['procedure_complexity'] = df['num_procedures'] * df['number_diagnoses']
         
-        # Age groups (clinical significance)
         df['is_elderly'] = (df['age'] >= 65).astype(int)
         df['is_very_elderly'] = (df['age'] >= 75).astype(int)
         
@@ -164,24 +156,20 @@ class DataPreprocessor:
         logger.info("STARTING DATA PREPROCESSING PIPELINE")
         logger.info("=" * 60)
         
-        # Load data
         df = self.load_data(input_path)
         
-        # Preprocessing steps
         df = self.remove_duplicates(df)
         df = self.handle_missing_values(df)
         df = self.handle_outliers(df)
         df = self.create_features(df)
         df = self.encode_categorical(df)
         
-        # Drop non-feature columns
         drop_cols = ['encounter_id', 'patient_id', 'admission_date']
         df = df.drop(columns=[col for col in drop_cols if col in df.columns])
         
         logger.info(f"Final dataset shape: {df.shape}")
         logger.info(f"Features: {list(df.columns)}")
         
-        # Save processed data
         if output_path:
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             df.to_csv(output_path, index=False)
