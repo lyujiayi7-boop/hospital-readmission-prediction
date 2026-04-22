@@ -33,9 +33,8 @@ class ReadmissionPredictor:
         
         logger.info(f"Loading model from {model_path}")
         self.model = joblib.load(model_path)
-        logger.info("✓ Model loaded successfully")
+        logger.info("Model loaded successfully")
         
-        # Load feature names if available
         self.expected_features = None
     
     def predict_single_patient(self, patient_data: Dict) -> Dict:
@@ -48,14 +47,11 @@ class ReadmissionPredictor:
         Returns:
             Dictionary with prediction and probability
         """
-        # Convert to DataFrame
         df = pd.DataFrame([patient_data])
         
-        # Make prediction
         prediction = self.model.predict(df)[0]
         probability = self.model.predict_proba(df)[0, 1]
         
-        # Determine risk level
         if probability < 0.3:
             risk_level = "Low"
         elif probability < 0.6:
@@ -86,22 +82,19 @@ class ReadmissionPredictor:
         """
         logger.info(f"Making predictions for {len(patient_df)} patients...")
         
-        # Make predictions
         predictions = self.model.predict(patient_df)
         probabilities = self.model.predict_proba(patient_df)[:, 1]
         
-        # Add to dataframe
         patient_df['readmission_prediction'] = predictions
         patient_df['readmission_probability'] = probabilities
         
-        # Risk levels
         patient_df['risk_level'] = pd.cut(
             probabilities,
             bins=[0, 0.3, 0.6, 1.0],
             labels=['Low', 'Moderate', 'High']
         )
         
-        logger.info("✓ Predictions complete")
+        logger.info("Predictions complete")
         
         return patient_df
     
@@ -125,7 +118,6 @@ class ReadmissionPredictor:
         return high_risk.sort_values('readmission_probability', ascending=False)
 
 
-# Example usage
 if __name__ == "__main__":
     # Example patient data
     sample_patient = {
