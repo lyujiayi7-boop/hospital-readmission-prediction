@@ -12,7 +12,6 @@ from typing import Dict, List
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
@@ -33,7 +32,6 @@ class PatientDataExtractor:
             db_config: Database configuration dictionary
         """
         if db_config is None:
-            # Use environment variables or default to SQLite for demo
             self.db_type = os.getenv('DB_TYPE', 'sqlite')
             self.db_path = os.getenv('DB_PATH', 'data/hospital_data.db')
         else:
@@ -236,19 +234,16 @@ class PatientDataExtractor:
         """
         logger.info("Creating master dataset from multiple sources...")
         
-        # Extract from all sources
         demographics = self.extract_patient_demographics()
         admissions = self.extract_admission_details()
         diagnoses = self.extract_diagnosis_data()
         medications = self.extract_medication_data()
         
-        # Merge datasets
         logger.info("Merging datasets...")
         master_df = admissions.merge(demographics, on='patient_id', how='left')
         master_df = master_df.merge(diagnoses, on=['patient_id', 'encounter_id'], how='left')
         master_df = master_df.merge(medications, on=['patient_id', 'encounter_id'], how='left')
         
-        # Save to CSV
         master_df.to_csv(output_path, index=False)
         logger.info(f"Master dataset created with {len(master_df)} records")
         logger.info(f"Saved to {output_path}")
@@ -288,9 +283,13 @@ class PatientDataExtractor:
         """
         
         logger.info("Generating readmission statistics...")
-        df = pd.read_sql_query(query, self.engine)
-        logger.info("\nReadmission Statistics by Age Group:")
-        print(df.to_string(index=False))
+df = pd.read_sql_query(query, self.engine)
+
+        logger.info("=" * 50)
+        logger.info("READMISSION STATISTICS BY AGE GROUP")
+        logger.info("=" * 50)
+        logger.info("\n%s", df.to_string(index=False))
+
         return df
     
     def close_connection(self):
@@ -300,14 +299,8 @@ class PatientDataExtractor:
 
 
 if __name__ == "__main__":
-    # Example usage
     extractor = PatientDataExtractor()
     
-    # Generate statistics
     stats = extractor.get_readmission_statistics()
-    
-    # Note: In production, you would call create_master_dataset()
-    # but this requires actual database tables
-    # extractor.create_master_dataset()
     
     extractor.close_connection()
