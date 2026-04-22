@@ -80,22 +80,22 @@ pip install -r requirements.txt
 
 1. **Generate sample data** (creates synthetic dataset for demo)
 ```bash
-python src/generate_sample_data.py
+python tests/src/generate_sample_data.py
 ```
 
 2. **Run preprocessing pipeline**
 ```bash
-python src/data_preprocessing.py
+python tests/src/data_preprocessing.py
 ```
 
 3. **Feature engineering**
 ```bash
-python src/feature_engineering.py --no-selection
+python tests/src/feature_engineering.py --no-selection
 ```
 
 4. **Train models**
 ```bash
-python src/model_training.py --no-cv
+python tests/src/model_training.py --input data/processed/cleaned_data.csv
 ```
 
 ---
