@@ -49,21 +49,21 @@ This project analyzes **1.1 million patient admission records** to predict hospi
 ```
 hospital-readmission-prediction/
 ├── data/
-│   ├── raw/                    # Raw patient data (1.1M records)
-│   └── processed/              # Cleaned and engineered features
+│   ├── raw/                    
+│   └── processed/             
 ├── src/
-│   ├── sql_data_extraction.py  # SQL queries for data extraction
-│   ├── data_preprocessing.py   # Data cleaning pipeline
-│   ├── feature_engineering.py  # Statistical feature creation
-│   ├── model_training.py       # ML model training
-│   └── prediction.py           # Prediction service
+│   ├── sql_data_extraction.py  
+│   ├── data_preprocessing.py   
+│   ├── feature_engineering.py  
+│   ├── model_training.py      
+│   └── prediction.py           
 ├── notebooks/
-│   └── 01_exploratory_analysis.ipynb  # Statistical EDA
+│   └── 01_exploratory_analysis.ipynb 
 ├── docs/
-│   ├── methodology.md          # Project methodology
-│   └── statistical_approach.md # Mathematical foundations
-├── models/                     # Trained models (.pkl files)
-└── tests/                      # Unit tests
+│   ├── methodology.md       
+│   └── statistical_approach.md 
+├── models/                     
+└── tests/                   
 ```
 
 ---
